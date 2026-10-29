@@ -68,15 +68,30 @@ Keyboard: <kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> step one 
 
 ## Connect your AI
 
-### Claude Code
+Clipai's MCP server is a small stdio program that relays your AI's commands to the running editor. Setup takes two steps.
+
+### 1. Start Clipai
+
+Follow the [Quick start](#quick-start) (`pnpm build` creates `packages/mcp/dist/index.js`) and keep `pnpm start` running. If the editor isn't running, every tool replies `Editor not running. Run "pnpm start" in the Clipai folder.`
+
+You need the **absolute path** to the Clipai folder: run `pwd` inside it (macOS/Linux) or `cd` (Windows).
+
+### 2. Register the MCP server
+
+#### Claude Code
 
 ```bash
 claude mcp add clipai -- node /absolute/path/to/Clipai/packages/mcp/dist/index.js
 ```
 
-### Claude Desktop
+Type `/mcp` inside Claude Code to check that `clipai` shows as connected.
 
-Add to `claude_desktop_config.json`:
+#### Claude Desktop
+
+Open **Settings → Developer → Edit Config**, or edit the file directly:
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -89,13 +104,37 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop. Keep the editor running (`pnpm start`) to see changes live. If the editor runs on another port, set `"env": { "CLIPAI_PORT": "4401" }`.
+On Windows, escape backslashes: `"C:\\Users\\me\\Clipai\\packages\\mcp\\dist\\index.js"`. Quit and reopen Claude Desktop; Clipai's tools appear in the tools menu.
 
-Then ask something like:
+#### Other MCP clients (Cursor, Windsurf, …)
+
+Use command `node` with the path to `packages/mcp/dist/index.js` as the argument (stdio transport).
+
+#### Different port
+
+If you started Clipai with `pnpm start --port 4401`, tell the MCP server:
+
+- Claude Code: `claude mcp add clipai -e CLIPAI_PORT=4401 -- node /absolute/path/to/Clipai/packages/mcp/dist/index.js`
+- Claude Desktop: add `"env": { "CLIPAI_PORT": "4401" }` next to `"args"`.
+
+### 3. Ask for a video
+
+Keep the editor open in Chrome or Edge, then ask something like:
 
 > Make a 30-second 16:9 promo for my app "TaskFlow". Dark theme, purple accent. Show the dashboard screenshot in a browser frame, highlight 3 features, end with the logo.
 
+Changes appear in the editor live. To use your own screenshots or music, give the AI the file path; it adds them with `add_asset`.
+
 MCP tools (responses are kept short to save tokens): `list_blocks`, `get_block`, `list_projects`, `create_project`, `open_project`, `set_project`, `apply_ops`, `get_summary`, `get_project`, `add_asset`, `snapshot`, `export_video`. A first draft usually takes 3–4 tool calls; each edit is one `apply_ops` call. `snapshot` and `export_video` need the editor open in Chrome or Edge.
+
+### Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| "Editor not running" | Run `pnpm start` and keep that terminal open |
+| Tools don't show up | Check the path is absolute and `packages/mcp/dist/index.js` exists (run `pnpm build`), then restart the client |
+| "No editor open" on snapshot or export | Open http://127.0.0.1:4400 in Chrome or Edge |
+| Export fails | Use Chrome or Edge; Firefox and Safari lack the H.264 encoder Clipai needs |
 
 ### Paste mode (any AI, no setup)
 
