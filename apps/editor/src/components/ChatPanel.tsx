@@ -30,7 +30,11 @@ function RichText({ text }: { text: string }) {
     <>
       {text.split("\n").map((line, i) => (
         <p key={i} className={line.trim() ? "" : "h-2"}>
-          {line.split(/(\*\*[^*]+\*\*)/g).map((part, j) => (part.startsWith("**") && part.endsWith("**") ? <b key={j}>{part.slice(2, -2)}</b> : part))}
+          {line
+            .split(/(\*\*[^*]+\*\*)/g)
+            .map((part, j) =>
+              part.startsWith("**") && part.endsWith("**") ? <b key={j}>{part.slice(2, -2)}</b> : part,
+            )}
         </p>
       ))}
     </>
@@ -39,7 +43,11 @@ function RichText({ text }: { text: string }) {
 
 function Message({ m, live }: { m: ChatMessage; live: boolean }) {
   if (m.role === "user") {
-    return <div className="ml-8 self-end whitespace-pre-wrap rounded-lg bg-accent px-3 py-2 text-accent-fg">{m.text}</div>;
+    return (
+      <div className="ml-8 self-end whitespace-pre-wrap rounded-lg bg-accent px-3 py-2 text-accent-fg">
+        {m.text}
+      </div>
+    );
   }
   return (
     <div className="mr-4 flex flex-col gap-1.5">
@@ -51,7 +59,13 @@ function Message({ m, live }: { m: ChatMessage; live: boolean }) {
               className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${s.ok === false ? "border-danger text-danger" : "border-line text-muted"}`}
               title={s.text}
             >
-              {s.ok === undefined ? <Loader2 size={10} className="animate-spin" /> : s.ok ? <Check size={10} /> : <X size={10} />}
+              {s.ok === undefined ? (
+                <Loader2 size={10} className="animate-spin" />
+              ) : s.ok ? (
+                <Check size={10} />
+              ) : (
+                <X size={10} />
+              )}
               {STEP_LABELS[s.name] ?? s.name}
             </span>
           ))}
@@ -67,7 +81,9 @@ function Message({ m, live }: { m: ChatMessage; live: boolean }) {
           <Loader2 size={12} className="animate-spin" /> Thinking…
         </span>
       )}
-      {m.error && <div className="rounded-md border border-danger px-2 py-1 text-xs text-danger">{m.error}</div>}
+      {m.error && (
+        <div className="rounded-md border border-danger px-2 py-1 text-xs text-danger">{m.error}</div>
+      )}
     </div>
   );
 }
@@ -83,6 +99,10 @@ export function ChatPanel() {
 
   useEffect(() => {
     void loadStatus();
+    // Re-check when the user comes back, e.g. after signing in to Claude Code in a terminal.
+    const onFocus = () => void loadStatus(true);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [loadStatus]);
 
   useEffect(() => {
@@ -102,11 +122,21 @@ export function ChatPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-1 border-b border-line px-3 py-1.5 text-xs text-muted">
+        <span className={`h-2 w-2 rounded-full ${status.backend ? "bg-emerald-500" : "bg-amber-500"}`} />
         <Sparkles size={12} className="text-accent" />
         <span className="flex-1 truncate">
-          {status.backend === "claude-code" ? "Claude via Claude Code" : status.backend === "api" ? `Claude via API key · ${status.model}` : "Not connected"}
+          {status.backend === "claude-code"
+            ? `Connected · Claude Code${status.claudeCode.plan ? ` (${status.claudeCode.plan} plan)` : ""}`
+            : status.backend === "api"
+              ? `Connected · API key · ${status.model}`
+              : "Not connected"}
         </span>
-        <button className="btn btn-icon" title="New chat" onClick={() => reset(name)} disabled={thread.length === 0}>
+        <button
+          className="btn btn-icon"
+          title="New chat"
+          onClick={() => reset(name)}
+          disabled={thread.length === 0}
+        >
           <MessageSquarePlus size={12} />
         </button>
         <button className="btn btn-icon" title="Chat settings" onClick={() => setSettings(true)}>
@@ -116,15 +146,21 @@ export function ChatPanel() {
 
       {!status.backend ? (
         <div className="flex-1 overflow-auto p-3">
-          <ConnectCard onOpenSettings={() => setSettings(true)} />
+          <ConnectCard problem={status.problem} onOpenSettings={() => setSettings(true)} />
         </div>
       ) : (
         <div ref={listRef} className="flex flex-1 flex-col gap-3 overflow-auto p-3">
           {thread.length === 0 ? (
             <div className="flex flex-col gap-2">
-              <p className="text-muted">Tell Claude what video you want. Changes appear in the preview as it works.</p>
+              <p className="text-muted">
+                Tell Claude what video you want. Changes appear in the preview as it works.
+              </p>
               {SUGGESTIONS.map((s) => (
-                <button key={s} className="btn justify-start whitespace-normal text-left" onClick={() => submit(s)}>
+                <button
+                  key={s}
+                  className="btn justify-start whitespace-normal text-left"
+                  onClick={() => submit(s)}
+                >
                   {s}
                 </button>
               ))}
@@ -141,7 +177,11 @@ export function ChatPanel() {
             rows={2}
             value={input}
             disabled={!status.backend}
-            placeholder={status.backend ? "Ask Claude to build or change your video…" : "Connect Claude to start chatting"}
+            placeholder={
+              status.backend
+                ? "Ask Claude to build or change your video…"
+                : "Connect Claude to start chatting"
+            }
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -156,39 +196,70 @@ export function ChatPanel() {
               <Square size={14} />
             </button>
           ) : (
-            <button className="btn btn-icon btn-primary" onClick={() => submit()} disabled={!input.trim() || !status.backend} title="Send (Enter)">
+            <button
+              className="btn btn-icon btn-primary"
+              onClick={() => submit()}
+              disabled={!input.trim() || !status.backend}
+              title="Send (Enter)"
+            >
               <Send size={14} />
             </button>
           )}
         </div>
-        <p className="mt-1 text-[10px] text-muted">Enter to send · Shift+Enter for a new line · Messages go to Anthropic.</p>
+        <p className="mt-1 text-[10px] text-muted">
+          Enter to send · Shift+Enter for a new line · Messages go to Anthropic.
+        </p>
       </div>
       {settings && <ChatSettings onClose={() => setSettings(false)} />}
     </div>
   );
 }
 
-function ConnectCard({ onOpenSettings }: { onOpenSettings: () => void }) {
+function ConnectCard({ problem, onOpenSettings }: { problem?: string; onOpenSettings: () => void }) {
   const { loadStatus } = useChat();
+  const [checking, setChecking] = useState(false);
+  const check = async () => {
+    setChecking(true);
+    await loadStatus(true);
+    setChecking(false);
+  };
+  const recheck = (
+    <button className="btn mt-2" onClick={check} disabled={checking}>
+      {checking ? <Loader2 size={12} className="animate-spin" /> : null} Check again
+    </button>
+  );
   return (
     <div className="flex flex-col gap-3">
       <h3 className="font-semibold">Connect Claude</h3>
-      <Option title="Use Claude Code (your Claude subscription)">
-        <ol className="list-decimal pl-4 text-muted">
-          <li>
-            Install Claude Code from{" "}
-            <a className="text-accent underline" href="https://claude.com/claude-code" target="_blank" rel="noreferrer">
-              claude.com/claude-code
-            </a>
-          </li>
-          <li>
-            Run <code>claude</code> once in a terminal and sign in
-          </li>
-        </ol>
-        <button className="btn mt-2" onClick={() => loadStatus()}>
-          Check again
-        </button>
-      </Option>
+      {problem === "claude-signed-out" ? (
+        <Option title="Claude Code is installed, but you're not signed in">
+          <p className="text-muted">
+            Open a terminal and run <code>claude auth login</code>, sign in with your Claude account, then
+            come back here.
+          </p>
+          {recheck}
+        </Option>
+      ) : (
+        <Option title="Use Claude Code (your Claude subscription)">
+          <ol className="list-decimal pl-4 text-muted">
+            <li>
+              Install Claude Code from{" "}
+              <a
+                className="text-accent underline"
+                href="https://claude.com/claude-code"
+                target="_blank"
+                rel="noreferrer"
+              >
+                claude.com/claude-code
+              </a>
+            </li>
+            <li>
+              Run <code>claude auth login</code> in a terminal and sign in
+            </li>
+          </ol>
+          {recheck}
+        </Option>
+      )}
       <Option title="Or use an Anthropic API key (pay per use)">
         <button className="btn" onClick={onOpenSettings}>
           Add API key
@@ -235,7 +306,11 @@ function ChatSettings({ onClose }: { onClose: () => void }) {
         <div className="rounded-md border border-line p-3">
           <div className="font-medium">Claude Code</div>
           <p className="text-muted">
-            {status.claudeCode.installed ? `Installed (${status.claudeCode.version}). Uses your Claude login and plan.` : "Not found. Install it from claude.com/claude-code, then run “claude” once to sign in."}
+            {!status.claudeCode.installed
+              ? "Not found. Install it from claude.com/claude-code, then run “claude auth login” to sign in."
+              : status.claudeCode.loggedIn === false
+                ? `Installed (${status.claudeCode.version}) but not signed in. Run “claude auth login” in a terminal.`
+                : `Installed (${status.claudeCode.version})${status.claudeCode.loggedIn ? `, signed in${status.claudeCode.plan ? ` with a ${status.claudeCode.plan} plan` : ""}` : ""}. Uses your Claude login.`}
           </p>
         </div>
         <div className="rounded-md border border-line p-3">
@@ -248,7 +323,13 @@ function ChatSettings({ onClose }: { onClose: () => void }) {
               : "Get a key at console.anthropic.com. It's stored only on this computer."}
           </p>
           <div className="flex gap-2">
-            <input type="password" placeholder="sk-ant-…" value={key} onChange={(e) => setKey(e.target.value)} autoComplete="off" />
+            <input
+              type="password"
+              placeholder="sk-ant-…"
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              autoComplete="off"
+            />
             <button className="btn btn-primary" disabled={!key.trim()} onClick={() => save({ apiKey: key })}>
               Save
             </button>
@@ -261,7 +342,8 @@ function ChatSettings({ onClose }: { onClose: () => void }) {
         </div>
         {error && <p className="text-danger">{error}</p>}
         <p className="text-xs text-muted">
-          Chat messages and your project summary are sent to Anthropic to generate replies. Everything else stays on your computer.
+          Chat messages and your project summary are sent to Anthropic to generate replies. Everything else
+          stays on your computer.
         </p>
       </div>
     </Modal>

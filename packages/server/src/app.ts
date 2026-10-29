@@ -325,7 +325,7 @@ export async function createApp(opts: AppOptions) {
     path.join(root, ".clipai"),
   );
 
-  app.get("/api/chat/status", async (c) => c.json(await chat.status()));
+  app.get("/api/chat/status", async (c) => c.json(await chat.status(c.req.query("refresh") === "1")));
 
   app.put("/api/chat/settings", async (c) => {
     const b = await body(c);

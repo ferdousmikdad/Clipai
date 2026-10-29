@@ -2,7 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import type { Project } from "@clipai/schema";
 import type { BlockRegistry } from "@clipai/engine";
 import type { ProjectStore } from "../store.js";
-import { SettingsStore, detectClaudeCode } from "./settings.js";
+import { SettingsStore, detectClaudeCode, forgetClaudeCode, type ClaudeCodeInfo } from "./settings.js";
 import { runApiTurn, apiErrorMessage, API_MODEL } from "./api-backend.js";
 import { runClaudeCodeTurn } from "./claude-code.js";
 import type { Backend, ChatMode, Emit } from "./types.js";
@@ -32,7 +32,9 @@ type Session = {
 export type ChatStatus = {
   mode: ChatMode;
   backend: Backend | null;
-  claudeCode: { installed: boolean; version?: string };
+  claudeCode: ClaudeCodeInfo;
+  /** Why there is no backend, when there isn't one. */
+  problem?: "claude-not-installed" | "claude-signed-out" | "no-api-key" | "nothing";
   apiKey: { set: boolean; source?: "settings" | "env" };
   model: string;
 };
@@ -49,14 +51,29 @@ export class ChatService {
     this.settings = new SettingsStore(settingsDir);
   }
 
-  async status(): Promise<ChatStatus> {
+  async status(refresh = false): Promise<ChatStatus> {
     const s = await this.settings.get();
-    const [cc, key] = await Promise.all([detectClaudeCode(), this.settings.apiKey()]);
+    const [cc, key] = await Promise.all([detectClaudeCode(refresh), this.settings.apiKey()]);
+    // Signed-in state unknown (older Claude Code) counts as usable; the first message will tell.
+    const ccReady = cc.installed && cc.loggedIn !== false;
     let backend: Backend | null = null;
-    if (s.mode === "claude-code") backend = cc.installed ? "claude-code" : null;
+    if (s.mode === "claude-code") backend = ccReady ? "claude-code" : null;
     else if (s.mode === "api") backend = key.key ? "api" : null;
-    else backend = cc.installed ? "claude-code" : key.key ? "api" : null;
-    return { mode: s.mode, backend, claudeCode: cc, apiKey: { set: !!key.key, source: key.source }, model: backend === "api" ? API_MODEL : "your Claude Code default" };
+    else backend = ccReady ? "claude-code" : key.key ? "api" : null;
+    let problem: ChatStatus["problem"];
+    if (!backend) {
+      if (s.mode === "api") problem = "no-api-key";
+      else if (cc.installed) problem = "claude-signed-out";
+      else problem = s.mode === "claude-code" ? "claude-not-installed" : "nothing";
+    }
+    return {
+      mode: s.mode,
+      backend,
+      claudeCode: cc,
+      apiKey: { set: !!key.key, source: key.source },
+      model: backend === "api" ? API_MODEL : "your Claude Code default",
+      problem,
+    };
   }
 
   private session(name: string): Session {
@@ -86,13 +103,13 @@ export class ChatService {
     }
     const status = await this.status();
     if (!status.backend) {
-      emit({
-        type: "error",
-        message:
-          status.mode === "claude-code"
-            ? "Claude Code isn't installed. Install it from claude.com/claude-code, or switch to an API key in chat settings."
-            : "Connect Claude first: install Claude Code, or add an Anthropic API key in chat settings.",
-      });
+      const messages: Record<NonNullable<ChatStatus["problem"]>, string> = {
+        "claude-signed-out": 'Claude Code is installed but not signed in. Run "claude auth login" in a terminal, then try again.',
+        "claude-not-installed": "Claude Code isn't installed. Install it from claude.com/claude-code, or switch to an API key in chat settings.",
+        "no-api-key": "Add an Anthropic API key in chat settings.",
+        nothing: "Connect Claude first: install Claude Code, or add an Anthropic API key in chat settings.",
+      };
+      emit({ type: "error", message: messages[status.problem ?? "nothing"] });
       return;
     }
     // Switching backend starts a fresh conversation (the two don't share history).
@@ -117,7 +134,10 @@ export class ChatService {
       emit({ type: "done", costUsd });
     } catch (err) {
       if (controller.signal.aborted) emit({ type: "done" });
-      else emit({ type: "error", message: status.backend === "api" ? apiErrorMessage(err) : (err as Error).message });
+      else {
+        if (status.backend === "claude-code") forgetClaudeCode(); // re-check sign-in next time
+        emit({ type: "error", message: status.backend === "api" ? apiErrorMessage(err) : (err as Error).message });
+      }
     } finally {
       session.running = undefined;
     }

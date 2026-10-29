@@ -112,6 +112,6 @@ export function runClaudeCodeTurn(
 }
 
 function explain(msg: string): string {
-  if (/log ?in|auth|credential|api key/i.test(msg)) return `Claude Code isn't signed in. Run "claude" once in a terminal to log in, then try again. (${msg.slice(0, 200)})`;
+  if (/log ?in|auth|credential|api key/i.test(msg)) return `Claude Code isn't signed in. Run "claude auth login" in a terminal, then try again. (${msg.slice(0, 200)})`;
   return msg.slice(0, 500);
 }

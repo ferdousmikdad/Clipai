@@ -46,19 +46,49 @@ export class SettingsStore {
   }
 }
 
-let detected: { at: number; value: Promise<{ installed: boolean; version?: string }> } | null = null;
+export type ClaudeCodeInfo = {
+  installed: boolean;
+  version?: string;
+  /** null when this Claude Code version can't report sign-in status. */
+  loggedIn: boolean | null;
+  /** e.g. "claude.ai" (subscription) or "api_key" — never the email. */
+  authMethod?: string;
+  plan?: string;
+};
 
-/** Is the Claude Code CLI installed? Cached for a minute. */
-export function detectClaudeCode(bin = claudeBin()): Promise<{ installed: boolean; version?: string }> {
-  if (detected && Date.now() - detected.at < 60_000) return detected.value;
-  const value = new Promise<{ installed: boolean; version?: string }>((resolve) => {
-    execFile(bin, ["--version"], { timeout: 8000, windowsHide: true }, (err, stdout) => {
-      if (err) resolve({ installed: false });
-      else resolve({ installed: true, version: String(stdout).trim().split(/\s+/)[0] });
-    });
+let detected: { at: number; value: Promise<ClaudeCodeInfo> } | null = null;
+
+function run(bin: string, args: string[]): Promise<string | null> {
+  return new Promise((resolve) => {
+    execFile(bin, args, { timeout: 10_000, windowsHide: true }, (err, stdout) => resolve(err && !stdout ? null : String(stdout)));
   });
+}
+
+/** Is Claude Code installed and signed in? Cached for a minute unless `refresh`. */
+export function detectClaudeCode(refresh = false, bin = claudeBin()): Promise<ClaudeCodeInfo> {
+  if (!refresh && detected && Date.now() - detected.at < 60_000) return detected.value;
+  const value = (async (): Promise<ClaudeCodeInfo> => {
+    const version = await run(bin, ["--version"]);
+    if (version === null) return { installed: false, loggedIn: false };
+    const info: ClaudeCodeInfo = { installed: true, version: version.trim().split(/\s+/)[0], loggedIn: null };
+    const status = await run(bin, ["auth", "status", "--json"]);
+    try {
+      const s = JSON.parse(status ?? "");
+      if (typeof s.loggedIn === "boolean") info.loggedIn = s.loggedIn;
+      if (typeof s.authMethod === "string") info.authMethod = s.authMethod;
+      if (typeof s.subscriptionType === "string") info.plan = s.subscriptionType;
+    } catch {
+      // older Claude Code without `auth status`: unknown, try it on first message
+    }
+    return info;
+  })();
   detected = { at: Date.now(), value };
   return value;
+}
+
+/** Forget the cached detection (e.g. after a sign-in error). */
+export function forgetClaudeCode(): void {
+  detected = null;
 }
 
 export const claudeBin = () => process.env.CLIPAI_CLAUDE_BIN || "claude";

@@ -77,9 +77,14 @@ Clipai connects to Claude in one of two ways. Pick one in the chat's settings (g
 
 | | Claude Code login (recommended) | Anthropic API key |
 | --- | --- | --- |
-| Setup | Install [Claude Code](https://claude.com/claude-code) and run `claude` once to sign in | Paste a key from [console.anthropic.com](https://console.anthropic.com) into chat settings, or set `ANTHROPIC_API_KEY` |
+| Setup | Install [Claude Code](https://claude.com/claude-code) and run `claude auth login` once to sign in | Paste a key from [console.anthropic.com](https://console.anthropic.com) into chat settings, or set `ANTHROPIC_API_KEY` |
 | Billing | Your Claude plan | Pay per use (model `claude-opus-5-5`) |
 | How it works | Clipai runs Claude Code in the background with **no file, shell or web tools**, only Clipai's own tools for the open project | Clipai calls the Anthropic API directly with the same tools |
+
+If Claude Code is installed and signed in, Clipai detects it and connects automatically; there's nothing to click. The top of the chat shows the state:
+
+- 🟢 **Connected · Claude Code (pro plan)** or **Connected · API key**: ready to chat
+- 🟠 **Not connected**: the chat explains what's missing, e.g. *"Claude Code is installed, but you're not signed in"* with the command to run. Clipai re-checks when you switch back to its tab, or click **Check again**.
 
 Notes:
 

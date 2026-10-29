@@ -3,7 +3,8 @@ import { create } from "zustand";
 export type ChatStatus = {
   mode: "auto" | "claude-code" | "api";
   backend: "claude-code" | "api" | null;
-  claudeCode: { installed: boolean; version?: string };
+  claudeCode: { installed: boolean; version?: string; loggedIn: boolean | null; authMethod?: string; plan?: string };
+  problem?: "claude-not-installed" | "claude-signed-out" | "no-api-key" | "nothing";
   apiKey: { set: boolean; source?: "settings" | "env" };
   model: string;
 };
@@ -17,7 +18,8 @@ type ChatState = {
   threads: Record<string, ChatMessage[]>;
   running: string | null;
   controller: AbortController | null;
-  loadStatus(): Promise<void>;
+  /** `refresh` re-checks Claude Code instead of using the server's cached answer. */
+  loadStatus(refresh?: boolean): Promise<void>;
   saveSettings(patch: { mode?: ChatStatus["mode"]; apiKey?: string | null }): Promise<void>;
   send(project: string, text: string): Promise<void>;
   stop(project: string): void;
@@ -32,8 +34,8 @@ export const useChat = create<ChatState>((set, get) => ({
   running: null,
   controller: null,
 
-  async loadStatus() {
-    const res = await fetch("/api/chat/status");
+  async loadStatus(refresh = false) {
+    const res = await fetch(`/api/chat/status${refresh ? "?refresh=1" : ""}`);
     if (res.ok) set({ status: await res.json() });
   },
 
