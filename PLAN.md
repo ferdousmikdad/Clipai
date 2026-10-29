@@ -31,7 +31,7 @@ A local, open-source (MIT) video editor for animated / SaaS-style videos that an
 
 ## 3. Tech stack
 
-All dependencies must be MIT / ISC / BSD / Apache-2.0 / MPL-2.0.
+All dependencies must be MIT / ISC / BSD / Apache-2.0 / MPL-2.0 / Unlicense.
 
 - **Language:** TypeScript (strict)
 - **Monorepo:** pnpm workspaces
@@ -400,7 +400,7 @@ Error messages must be short and actionable, e.g. `s3.props.title: required`.
 
 ## 15. Rules for Claude Code
 
-1. Before adding any dependency, check its license. Allowed: MIT, ISC, BSD-2/3, Apache-2.0, MPL-2.0. Otherwise stop and ask.
+1. Before adding any dependency, check its license. Allowed: MIT, ISC, BSD-2/3, Apache-2.0, MPL-2.0, Unlicense. Otherwise stop and ask.
 2. Never add Remotion, Motion Canvas forks with restrictive terms, GPL/AGPL code, or bundled FFmpeg.
 3. Never commit copyrighted fonts, music, images, or real brand logos. Use fictional demo brands.
 4. Keep `renderFrame` deterministic; preview and export must share it.

@@ -61,7 +61,7 @@ export function Editor({ fontsReady, pluginsVersion }: { fontsReady: boolean; pl
   return (
     <div
       className="grid h-full"
-      style={{ gridTemplateRows: "48px minmax(0,1fr) 220px", gridTemplateColumns: "240px minmax(0,1fr) 320px" }}
+      style={{ gridTemplateRows: "48px minmax(0,1fr) 220px", gridTemplateColumns: "240px minmax(0,1fr) 360px" }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes("Files")) {
           e.preventDefault();

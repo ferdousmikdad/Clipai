@@ -117,7 +117,7 @@ export const useStore = create<State>((set, get) => ({
       time: Math.min(s.time, duration),
       selection: stillThere ? sel : project.scenes[0] ? { kind: "scene", id: project.scenes[0].id } : null,
     });
-    if (source === "mcp" || source === "api") {
+    if (source === "mcp" || source === "api" || source === "ai") {
       const ids = changed.filter((c) => /^[so]\d+$/.test(c));
       set({ highlight: ids });
       setTimeout(() => get().highlight === ids && set({ highlight: [] }), 1500);

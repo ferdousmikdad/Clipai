@@ -80,3 +80,17 @@ describe("MCP server", () => {
     expect(res).toEqual({ text: NOT_RUNNING, isError: true });
   });
 });
+
+describe("MCP server locked to a project (in-app chat)", () => {
+  it("hides project pickers and edits the given project", async () => {
+    const mcp = createMcpServer(server.url, "promo");
+    const [a, b] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test", version: "1" });
+    await Promise.all([mcp.connect(a), client.connect(b)]);
+    const names = (await client.listTools()).tools.map((t) => t.name);
+    expect(names).not.toContain("create_project");
+    expect(names).not.toContain("open_project");
+    const res: any = await client.callTool({ name: "get_summary", arguments: {} });
+    expect(res.content[0].text).toMatch(/^promo · /);
+  });
+});

@@ -27,7 +27,8 @@ You describe the video. Your AI assistant (Claude Code, Claude Desktop, or any M
 - Export to MP4 (H.264 + AAC) directly in the browser using WebCodecs — preview and export use the exact same renderer
 - Background music with volume and fade-out
 - Bangla font support out of the box (Hind Siliguri, Noto Sans Bengali)
-- Three ways to work with AI: MCP (live control), Paste mode (any AI chat), or manual editing
+- **Built-in AI chat**: type what you want in the editor and Claude builds it live, using your Claude Code login or an Anthropic API key
+- Other ways to work with AI: MCP (Claude Code, Claude Desktop, Cursor…), Paste mode (any AI chat), or manual editing
 - Plugin blocks: drop a `.js` file into `blocks/`
 
 ![Editor](docs/images/editor.png)
@@ -63,6 +64,29 @@ Projects are saved as plain folders in `./projects/<project-name>/` (a `project.
 Options: `pnpm start --port 4401` (or `CLIPAI_PORT`), `--projects <dir>` (or `CLIPAI_PROJECTS`).
 
 Keyboard: <kbd>Space</kbd> play/pause · <kbd>←</kbd>/<kbd>→</kbd> step one frame (<kbd>Shift</kbd> = 1 s) · <kbd>Ctrl/Cmd+Z</kbd> undo · <kbd>Ctrl/Cmd+Shift+Z</kbd> redo · <kbd>Delete</kbd> remove the selected scene/overlay. Drop images or audio anywhere on the editor to add them as assets.
+
+---
+
+## Chat with Claude inside Clipai
+
+The editor has an **AI Chat** tab (right panel). Type what you want, for example *"Make a 20-second promo for my app with 4 scenes, green theme"*, and Claude builds it while you watch the preview and timeline update. You don't need another app or editor.
+
+![AI chat](docs/images/chat.png)
+
+Clipai connects to Claude in one of two ways. Pick one in the chat's settings (gear icon); by default it uses whichever is available:
+
+| | Claude Code login (recommended) | Anthropic API key |
+| --- | --- | --- |
+| Setup | Install [Claude Code](https://claude.com/claude-code) and run `claude` once to sign in | Paste a key from [console.anthropic.com](https://console.anthropic.com) into chat settings, or set `ANTHROPIC_API_KEY` |
+| Billing | Your Claude plan | Pay per use (model `claude-opus-5-5`) |
+| How it works | Clipai runs Claude Code in the background with **no file, shell or web tools**, only Clipai's own tools for the open project | Clipai calls the Anthropic API directly with the same tools |
+
+Notes:
+
+- Claude only edits the project you have open. Every change can be undone (<kbd>Ctrl/Cmd+Z</kbd>).
+- To use your own screenshots, logos or music, drop the files onto the editor, or give Claude the file path.
+- A saved API key is stored only on your computer, in `.clipai/settings.json` (gitignored, owner-only permissions). The editor never shows the key again after you save it.
+- **New chat** (the icon next to the gear) starts a fresh conversation.
 
 ---
 
@@ -187,7 +211,7 @@ Clipai uses its **own rendering engine** (HTML Canvas + WebCodecs). It does **no
 
 ### Third-party software
 
-Clipai depends on open-source packages that keep their own licenses (MIT, ISC, BSD, Apache-2.0, or MPL-2.0). A full list is generated in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) with:
+Clipai depends on open-source packages that keep their own licenses (MIT, ISC, BSD, Apache-2.0, MPL-2.0, or Unlicense). A full list is generated in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) with:
 
 ```bash
 pnpm licenses:notice
@@ -211,7 +235,7 @@ Bundled fonts are licensed under the **SIL Open Font License 1.1** (e.g., Inter,
 
 ### Privacy
 
-Clipai runs entirely on your computer. It collects **no telemetry** and sends no data anywhere. The local server listens only on `127.0.0.1`. If you connect an AI assistant, your conversations with that assistant are handled under that provider's own terms and privacy policy.
+Clipai runs entirely on your computer. It collects **no telemetry**. The local server listens only on `127.0.0.1`. The only data that leaves your machine is what you send to an AI: when you use the built-in chat, your messages, the project summary and the tool results Claude asks for (including rendered frames, if Claude requests a snapshot) go to Anthropic, either through Claude Code or the Anthropic API, under Anthropic's terms and privacy policy. The same applies to any AI assistant you connect over MCP, under that provider's terms. Rendering, editing and export never leave your computer.
 
 ### Plugins
 
@@ -228,7 +252,7 @@ The software is provided **"as is"**, without warranty of any kind, as stated in
 Contributions are welcome — especially new animation blocks.
 
 Rules:
-- Dependencies must use one of these licenses: **MIT, ISC, BSD-2-Clause, BSD-3-Clause, Apache-2.0, MPL-2.0** (unmodified). CI blocks anything else.
+- Dependencies must use one of these licenses: **MIT, ISC, BSD-2-Clause, BSD-3-Clause, Apache-2.0, MPL-2.0, Unlicense** (unmodified). CI blocks anything else.
 - No GPL / AGPL / source-available or commercially restricted dependencies (this includes Remotion).
 - Fonts must be OFL or similarly free to redistribute. No copyrighted music, images, or brand logos in the repo.
 - By contributing, you agree your contribution is released under the MIT License.

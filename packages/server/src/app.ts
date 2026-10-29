@@ -8,6 +8,7 @@ import { assetType, contentType, isValidName, safeFileName, toName, within } fro
 import { isLocalRequest } from "./security.js";
 import type { Hub } from "./hub.js";
 import { loadPlugins, type LoadedPlugin } from "./plugins.js";
+import { ChatService } from "./chat/index.js";
 
 export type AppOptions = {
   root: string;
@@ -17,7 +18,7 @@ export type AppOptions = {
   hub?: () => Hub | undefined;
 };
 
-type Source = "ui" | "mcp" | "api";
+type Source = "ui" | "mcp" | "api" | "ai";
 
 export async function createApp(opts: AppOptions) {
   const { root } = opts;
@@ -197,35 +198,15 @@ export async function createApp(opts: AppOptions) {
   });
 
   // ---- assets ----
-  app.post("/api/projects/:name/assets", async (c) => {
-    const n = name(c);
+  const assetsDirOf = async (n: string) => {
     await store.get(n);
-    const assetsDir = path.join(store.projectDir(n), "assets");
-    await fs.mkdir(assetsDir, { recursive: true });
-    const ct = c.req.header("content-type") ?? "";
-    let fileName: string;
-    let requestedId: string | undefined;
-    if (ct.includes("multipart/form-data")) {
-      const form = await c.req.parseBody();
-      const file = form.file;
-      if (!(file instanceof File)) throw new StoreError("file: required (multipart field 'file')");
-      fileName = await uniqueFile(assetsDir, safeFileName(file.name));
-      if (!assetType(fileName)) throw new StoreError(`unsupported file type: ${fileName}`);
-      await fs.writeFile(path.join(assetsDir, fileName), Buffer.from(await file.arrayBuffer()));
-      requestedId = typeof form.id === "string" ? form.id : undefined;
-    } else {
-      // Copying from a local path is only allowed for the MCP server (the user's own machine).
-      if (source(c) !== "mcp") throw new StoreError("copying a local path is only allowed via MCP", 403);
-      const b = await body(c);
-      const src = path.resolve(String(b.path ?? ""));
-      const stat = await fs.stat(src).catch(() => null);
-      if (!stat?.isFile()) throw new StoreError(`path: file not found "${b.path}"`, 404);
-      if (stat.size > 500 * 1024 * 1024) throw new StoreError("file too large (max 500 MB)");
-      fileName = await uniqueFile(assetsDir, safeFileName(src));
-      if (!assetType(fileName)) throw new StoreError(`unsupported file type: ${fileName}`);
-      await fs.copyFile(src, path.join(assetsDir, fileName));
-      requestedId = typeof b.id === "string" ? b.id : undefined;
-    }
+    const dir = path.join(store.projectDir(n), "assets");
+    await fs.mkdir(dir, { recursive: true });
+    return dir;
+  };
+
+  /** Add a file already in assets/ to the project, picking a free id. */
+  const registerAsset = async (n: string, fileName: string, requestedId: string | undefined, src: Source) => {
     const project = await store.get(n);
     const taken = new Set(project.assets.map((a) => a.id));
     let id = toName(requestedId || fileName.replace(/\.[^.]+$/, "")) || "asset";
@@ -236,8 +217,42 @@ export async function createApp(opts: AppOptions) {
     }
     const type = assetType(fileName)!;
     const res = await store.apply(n, [{ op: "add_asset", asset: { id, type, file: fileName } }]);
-    notify(n, res.project, source(c), ["assets"]);
-    return c.json({ ok: true, id, type, file: fileName });
+    notify(n, res.project, src, ["assets"]);
+    return { id, type, file: fileName };
+  };
+
+  /** Copy a file from this machine into a project (MCP and the in-app chat only). */
+  const copyLocalAsset = async (n: string, srcPath: string, requestedId: string | undefined, src: Source) => {
+    const assetsDir = await assetsDirOf(n);
+    const from = path.resolve(srcPath);
+    const stat = await fs.stat(from).catch(() => null);
+    if (!stat?.isFile()) throw new StoreError(`path: file not found "${srcPath}"`, 404);
+    if (stat.size > 500 * 1024 * 1024) throw new StoreError("file too large (max 500 MB)");
+    const fileName = await uniqueFile(assetsDir, safeFileName(from));
+    if (!assetType(fileName)) throw new StoreError(`unsupported file type: ${fileName}`);
+    await fs.copyFile(from, path.join(assetsDir, fileName));
+    return registerAsset(n, fileName, requestedId, src);
+  };
+
+  app.post("/api/projects/:name/assets", async (c) => {
+    const n = name(c);
+    const ct = c.req.header("content-type") ?? "";
+    if (ct.includes("multipart/form-data")) {
+      const assetsDir = await assetsDirOf(n);
+      const form = await c.req.parseBody();
+      const file = form.file;
+      if (!(file instanceof File)) throw new StoreError("file: required (multipart field 'file')");
+      const fileName = await uniqueFile(assetsDir, safeFileName(file.name));
+      if (!assetType(fileName)) throw new StoreError(`unsupported file type: ${fileName}`);
+      await fs.writeFile(path.join(assetsDir, fileName), Buffer.from(await file.arrayBuffer()));
+      const res = await registerAsset(n, fileName, typeof form.id === "string" ? form.id : undefined, source(c));
+      return c.json({ ok: true, ...res });
+    }
+    // Copying from a local path is only allowed for the MCP server (the user's own machine).
+    if (source(c) !== "mcp") throw new StoreError("copying a local path is only allowed via MCP", 403);
+    const b = await body(c);
+    const res = await copyLocalAsset(n, String(b.path ?? ""), typeof b.id === "string" ? b.id : undefined, "mcp");
+    return c.json({ ok: true, ...res });
   });
 
   app.get("/api/projects/:name/assets/:file", async (c) => {
@@ -291,6 +306,77 @@ export async function createApp(opts: AppOptions) {
     return c.json({ ok: true, png: res.png });
   });
 
+  // ---- in-app chat ----
+  const chat = new ChatService(
+    {
+      store,
+      registry,
+      notify: (n, project, changed) => notify(n, project, "ai", changed),
+      addAsset: (n, p, id) => copyLocalAsset(n, p, id, "ai"),
+      snapshot: async (n, time) => {
+        const h = hub();
+        if (!h) throw new Error("live sync not running");
+        return (await h.request<{ png: string }>("snapshot:request", n, { time, width: 960 }, 20_000)).png;
+      },
+      projectDir: (n) => store.projectDir(n),
+      mcpEntry: path.join(root, "packages", "mcp", "dist", "index.js"),
+      port: opts.port,
+    },
+    path.join(root, ".clipai"),
+  );
+
+  app.get("/api/chat/status", async (c) => c.json(await chat.status()));
+
+  app.put("/api/chat/settings", async (c) => {
+    const b = await body(c);
+    const mode = b.mode;
+    if (mode !== undefined && !["auto", "claude-code", "api"].includes(mode)) throw new StoreError('mode: must be "auto", "claude-code" or "api"');
+    if (b.apiKey !== undefined && b.apiKey !== null && typeof b.apiKey !== "string") throw new StoreError("apiKey: must be a string or null");
+    await chat.settings.update({ mode, apiKey: b.apiKey });
+    return c.json(await chat.status());
+  });
+
+  /** Send a chat message. Streams newline-delimited JSON events until the turn ends. */
+  app.post("/api/projects/:name/chat", async (c) => {
+    const n = name(c);
+    await store.get(n);
+    const message = String((await body(c)).message ?? "").trim();
+    if (!message) throw new StoreError("message: required");
+    const signal = c.req.raw.signal;
+    const enc = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const emit = (e: object) => {
+          try {
+            controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));
+          } catch {
+            // client went away
+          }
+        };
+        await chat.send(n, message, emit, signal);
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
+      },
+      cancel() {
+        chat.stop(n);
+      },
+    });
+    return new Response(stream, { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-cache" } });
+  });
+
+  app.post("/api/projects/:name/chat/stop", (c) => {
+    chat.stop(name(c));
+    return c.json({ ok: true });
+  });
+
+  app.post("/api/projects/:name/chat/reset", (c) => {
+    chat.reset(name(c));
+    return c.json({ ok: true });
+  });
+
   // ---- static: fonts, plugins, editor ----
   app.get("/fonts/:file", async (c) => {
     const full = within(fontsDir, c.req.param("file"));
@@ -314,7 +400,7 @@ export async function createApp(opts: AppOptions) {
     return new Response(await fs.readFile(full), { headers: { "content-type": contentType(full), "cache-control": cache } });
   });
 
-  return { app, store, registry, plugins };
+  return { app, store, registry, plugins, chat };
 }
 
 async function uniqueFile(dir: string, name: string): Promise<string> {

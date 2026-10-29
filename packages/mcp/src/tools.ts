@@ -33,8 +33,19 @@ type Text = { content: { type: "text"; text: string }[]; isError?: boolean };
 const text = (t: string): Text => ({ content: [{ type: "text", text: t }] });
 const fail = (t: string): Text => ({ content: [{ type: "text", text: t }], isError: true });
 
-export function registerTools(server: McpServer, client: ClipaiClient) {
-  let current: string | undefined;
+/** Instructions when the server is locked to one project (the in-app chat). */
+export const LOCKED_INSTRUCTIONS = INSTRUCTIONS.replace("2. create_project (or open_project) to pick the project.", "2. The project is already open; every tool works on it.");
+
+const PROJECT_PICKERS = new Set(["list_projects", "create_project", "open_project"]);
+
+/**
+ * Register Clipai's tools. With `project` (set by the in-app chat), the server is locked to that
+ * project: the tools that pick or create projects are left out, so edits land where the user is looking.
+ */
+export function registerTools(server: McpServer, client: ClipaiClient, project?: string) {
+  let current: string | undefined = project;
+  const register = ((name: string, config: any, cb: any) =>
+    project && PROJECT_PICKERS.has(name) ? undefined : server.registerTool(name, config, cb)) as McpServer["registerTool"];
 
   const need = () => {
     if (!current) throw new ClipaiError("No project open. Call create_project or open_project first.");
@@ -51,19 +62,19 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     };
   const enc = encodeURIComponent;
 
-  server.registerTool(
+  register(
     "list_blocks",
     { description: "List available blocks, one line each: id — summary — props (* = required). Call once." },
     wrap(async () => text(await client.call<string>("GET", "/api/blocks"))),
   );
 
-  server.registerTool(
+  register(
     "get_block",
     { description: "Props of one block with types, defaults and an example.", inputSchema: { id: z.string() } },
     wrap(async ({ id }: { id: string }) => text(await client.call<string>("GET", `/api/blocks/${enc(id)}?format=text`))),
   );
 
-  server.registerTool(
+  register(
     "list_projects",
     { description: "List projects (name, format, duration)." },
     wrap(async () => {
@@ -73,7 +84,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "create_project",
     {
       description: "Create a project and make it current. Returns its summary.",
@@ -100,7 +111,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "open_project",
     { description: "Make an existing project current. Returns its summary.", inputSchema: { name: z.string() } },
     wrap(async ({ name }: { name: string }) => {
@@ -110,7 +121,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "set_project",
     {
       description: "Replace the current project with full project JSON (use for the first build). Returns ok + summary, or errors.",
@@ -133,7 +144,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "apply_ops",
     {
       description: `Edit the current project. Batch every change into one call. Returns ok + summary, or errors.\n${OP_HELP}`,
@@ -145,13 +156,13 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "get_summary",
     { description: "Compact summary of the current project." },
     wrap(async () => text(await client.call<string>("GET", `/api/projects/${enc(need())}/summary`))),
   );
 
-  server.registerTool(
+  register(
     "get_project",
     { description: "Full project JSON. Costs tokens: only use when the summary is not enough." },
     wrap(async () => {
@@ -160,7 +171,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "add_asset",
     {
       description: "Copy a local file (image/audio) into the current project. Returns the asset id to use in props. Never guess paths; ask the user.",
@@ -172,7 +183,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "snapshot",
     {
       description: "Render one frame as PNG. Costs many tokens: only use when the user asks to see a frame. Needs the editor open in a browser.",
@@ -184,7 +195,7 @@ export function registerTools(server: McpServer, client: ClipaiClient) {
     }),
   );
 
-  server.registerTool(
+  register(
     "export_video",
     {
       description: "Export the current project to MP4 in the open editor (Chrome/Edge). Returns the file path when done.",

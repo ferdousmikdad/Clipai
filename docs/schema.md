@@ -94,5 +94,9 @@ All endpoints are on `127.0.0.1` only; requests with a non-localhost `Host` or `
 | GET | `/api/blocks` | compact block list (`?format=full` for JSON with schemas) |
 | GET | `/api/blocks/:id` | one block's JSON Schema (`?format=text` for a short description) |
 | GET | `/api/ai-prompt?project=` | the paste-mode prompt |
+| GET | `/api/chat/status` | which chat backend is available (Claude Code / API key); never returns the key |
+| PUT | `/api/chat/settings` | `{mode: "auto"\|"claude-code"\|"api", apiKey?: string\|null}` |
+| POST | `/api/projects/:name/chat` | `{message}` → newline-delimited JSON events: `start`, `text`, `tool`, `tool_done`, `error`, `done` |
+| POST | `/api/projects/:name/chat/stop`, `/chat/reset` | stop the running turn / start a new conversation |
 
 WebSocket `/ws` messages: `project:updated {name, project, source, changed}`, `project:changed-by {source}`, `snapshot:request/response`, `export:request/response`.
