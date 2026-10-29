@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <rect width="1600" height="1000" fill="#F7F7FB"/>
+  <rect width="260" height="1000" fill="#151522"/>
+  <rect x="32" y="36" width="44" height="44" rx="12" fill="#7C3AED"/>
+  <text x="92" y="68" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fff">TaskFlow</text>
+  <g font-family="Arial, sans-serif" font-size="20" fill="#A7A7C0">
+    <rect x="20" y="130" width="220" height="46" rx="10" fill="#26263A"/>
+    <text x="44" y="160" fill="#fff">Dashboard</text>
+    <text x="44" y="222">Projects</text><text x="44" y="278">Timeline</text><text x="44" y="334">Team</text><text x="44" y="390">Reports</text>
+  </g>
+  <text x="310" y="90" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#151522">Good morning, Sam</text>
+  <rect x="1300" y="52" width="250" height="52" rx="26" fill="#7C3AED"/>
+  <text x="1338" y="86" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#fff">+ New task</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="310" y="140" width="390" height="170" rx="18" fill="#fff" stroke="#E6E6EF"/>
+    <text x="340" y="190" font-size="20" fill="#6B6B80">Tasks done</text><text x="340" y="262" font-size="56" font-weight="700" fill="#151522">128</text>
+    <rect x="730" y="140" width="390" height="170" rx="18" fill="#fff" stroke="#E6E6EF"/>
+    <text x="760" y="190" font-size="20" fill="#6B6B80">On track</text><text x="760" y="262" font-size="56" font-weight="700" fill="#16A34A">94%</text>
+    <rect x="1150" y="140" width="400" height="170" rx="18" fill="#fff" stroke="#E6E6EF"/>
+    <text x="1180" y="190" font-size="20" fill="#6B6B80">Hours saved</text><text x="1180" y="262" font-size="56" font-weight="700" fill="#7C3AED">36h</text>
+    <rect x="310" y="340" width="810" height="610" rx="18" fill="#fff" stroke="#E6E6EF"/>
+    <text x="340" y="390" font-size="24" font-weight="700" fill="#151522">Weekly progress</text>
+    <g fill="#7C3AED">
+      <rect x="370" y="700" width="60" height="200" rx="8"/><rect x="480" y="620" width="60" height="280" rx="8"/><rect x="590" y="560" width="60" height="340" rx="8"/>
+      <rect x="700" y="650" width="60" height="250" rx="8"/><rect x="810" y="500" width="60" height="400" rx="8"/><rect x="920" y="450" width="60" height="450" rx="8" fill="#22D3EE"/>
+      <rect x="1030" y="600" width="60" height="300" rx="8"/>
+    </g>
+    <rect x="1150" y="340" width="400" height="610" rx="18" fill="#fff" stroke="#E6E6EF"/>
+    <text x="1180" y="390" font-size="24" font-weight="700" fill="#151522">Up next</text>
+    <g font-size="20" fill="#151522">
+      <rect x="1180" y="420" width="340" height="80" rx="12" fill="#F3F0FF"/><text x="1205" y="468">Design review</text>
+      <rect x="1180" y="520" width="340" height="80" rx="12" fill="#ECFEFF"/><text x="1205" y="568">Ship v2.1</text>
+      <rect x="1180" y="620" width="340" height="80" rx="12" fill="#F3F0FF"/><text x="1205" y="668">Team sync</text>
+      <rect x="1180" y="720" width="340" height="80" rx="12" fill="#ECFEFF"/><text x="1205" y="768">Write changelog</text>
+    </g>
+  </g>
+</svg>

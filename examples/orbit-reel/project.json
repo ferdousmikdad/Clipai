@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "meta": { "name": "orbit-reel", "format": "9:16", "fps": 30, "resolution": "1080p" },
+  "theme": { "primary": "#F97316", "secondary": "#FACC15", "background": "#120B07", "text": "#FFF7ED", "font": "Poppins", "radius": 20 },
+  "assets": [
+    { "id": "before", "type": "image", "file": "before.svg" },
+    { "id": "after", "type": "image", "file": "after.svg" },
+    { "id": "app", "type": "image", "file": "app.svg" }
+  ],
+  "scenes": [
+    { "id": "s1", "block": "background", "duration": 2, "props": { "style": "mesh", "text": "Orbit" } },
+    { "id": "s2", "block": "kinetic-text", "duration": 3.5, "props": { "lines": ["Too many tabs?", "Too many pings?", "Meet Orbit."], "emphasis": ["Orbit"] }, "transition": { "type": "fade", "duration": 0.4 } },
+    { "id": "s3", "block": "before-after", "duration": 4, "props": { "beforeAsset": "before", "afterAsset": "after" }, "transition": { "type": "slide", "duration": 0.4 } },
+    { "id": "s4", "block": "ui-mockup", "duration": 3.5, "props": { "asset": "app", "frame": "phone", "motion": "float", "caption": "Your day, sorted" }, "transition": { "type": "fade", "duration": 0.4 } },
+    { "id": "s5", "block": "zoom-pan", "duration": 3.5, "props": { "asset": "app", "from": { "x": 0.5, "y": 0.5, "scale": 1 }, "to": { "x": 0.5, "y": 0.25, "scale": 2.2 } }, "transition": { "type": "zoom", "duration": 0.4 } },
+    { "id": "s6", "block": "testimonial", "duration": 4.5, "props": { "quote": "Orbit gave me two hours back every single day.", "name": "Mira Okafor", "role": "Designer, Lumen Studio", "rating": 5 }, "transition": { "type": "fade", "duration": 0.4 } },
+    { "id": "s7", "block": "pricing-card", "duration": 4, "props": { "title": "Pick your plan", "plans": [{ "name": "Free", "price": "$0", "features": ["1 workspace", "Smart inbox"] }, { "name": "Plus", "price": "$8", "features": ["Unlimited workspaces", "Focus mode", "Calendar sync"], "highlight": true }] }, "transition": { "type": "wipe", "duration": 0.4 } },
+    { "id": "s8", "block": "logo-outro", "duration": 3, "props": { "text": "orbit.example", "cta": "Get Orbit", "brand": "Orbit" }, "transition": { "type": "fade", "duration": 0.4 } }
+  ],
+  "overlays": [
+    { "id": "o1", "block": "captions", "start": 2, "end": 9.5, "props": { "style": "bold", "lines": [{ "text": "Your inbox is chaos.", "start": 0, "end": 3.5 }, { "text": "Orbit sorts it for you.", "start": 3.5, "end": 7.5 }] } },
+    { "id": "o2", "block": "watermark", "start": 0, "end": 28, "props": { "text": "orbit", "position": "top-left", "opacity": 0.6 } }
+  ]
+}

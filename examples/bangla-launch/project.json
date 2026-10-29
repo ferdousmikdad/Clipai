@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "meta": { "name": "bangla-launch", "format": "1:1", "fps": 30, "resolution": "1080p" },
+  "theme": { "primary": "#059669", "secondary": "#0EA5E9", "background": "#06140F", "text": "#ECFDF5", "font": "Hind Siliguri", "radius": 18 },
+  "assets": [],
+  "scenes": [
+    { "id": "s1", "block": "title-reveal", "duration": 3, "props": { "title": "নতুন অ্যাপ এসেছে", "subtitle": "সহজে কাজ গুছিয়ে নিন", "style": "rise" } },
+    { "id": "s2", "block": "title-reveal", "duration": 3, "props": { "title": "দ্রুত, নিরাপদ, সহজ", "style": "type" }, "transition": { "type": "fade", "duration": 0.4 } },
+    { "id": "s3", "block": "feature-callout", "duration": 3, "props": { "title": "স্বয়ংক্রিয় সিঙ্ক", "text": "প্রতিটি ডিভাইসে, সাথে সাথে।", "icon": "refresh-cw" }, "transition": { "type": "slide", "duration": 0.4 } },
+    { "id": "s4", "block": "logo-outro", "duration": 2.5, "props": { "text": "kaj.example", "cta": "শুরু করুন", "brand": "Kaj" }, "transition": { "type": "fade", "duration": 0.4 } }
+  ],
+  "overlays": []
+}

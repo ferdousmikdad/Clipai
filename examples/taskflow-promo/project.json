@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "meta": { "name": "taskflow-promo", "format": "16:9", "fps": 30, "resolution": "1080p" },
+  "theme": { "primary": "#7C3AED", "secondary": "#22D3EE", "background": "#0B0B12", "text": "#FFFFFF", "font": "Inter", "radius": 16 },
+  "assets": [{ "id": "dash", "type": "image", "file": "dashboard.svg" }],
+  "scenes": [
+    { "id": "s1", "block": "title-reveal", "duration": 3, "props": { "title": "Meet TaskFlow", "subtitle": "Plan less. Ship more." } },
+    { "id": "s2", "block": "ui-mockup", "duration": 4, "props": { "asset": "dash", "frame": "browser", "motion": "slide-up", "url": "app.taskflow.example" }, "transition": { "type": "fade", "duration": 0.4 } },
+    { "id": "s3", "block": "cursor-click", "duration": 4, "props": { "asset": "dash", "path": [{ "x": 0.5, "y": 0.5 }, { "x": 0.89, "y": 0.08 }], "url": "app.taskflow.example" }, "transition": { "type": "fade", "duration": 0.3 } },
+    { "id": "s4", "block": "feature-callout", "duration": 3, "props": { "title": "Auto-sync", "text": "Every device, instantly.", "icon": "refresh-cw", "eyebrow": "New" }, "transition": { "type": "slide", "duration": 0.5 } },
+    { "id": "s5", "block": "feature-grid", "duration": 4, "props": { "title": "Built for busy teams", "items": [{ "icon": "zap", "title": "Fast", "text": "Opens in a blink." }, { "icon": "shield-check", "title": "Private", "text": "Your data stays yours." }, { "icon": "users", "title": "Shared", "text": "Invite the whole team." }] }, "transition": { "type": "zoom", "duration": 0.5 } },
+    { "id": "s6", "block": "stats-counter", "duration": 3.5, "props": { "title": "Teams love it", "items": [{ "value": 12, "suffix": "k+", "label": "Teams" }, { "value": 99.9, "suffix": "%", "label": "Uptime" }, { "value": 4.9, "suffix": "/5", "label": "Rating" }] }, "transition": { "type": "wipe", "duration": 0.5 } },
+    { "id": "s7", "block": "logo-outro", "duration": 3, "props": { "text": "taskflow.example", "cta": "Start free", "brand": "TaskFlow" }, "transition": { "type": "fade", "duration": 0.5 } }
+  ],
+  "overlays": [
+    { "id": "o1", "block": "lower-third", "start": 3.5, "end": 7, "props": { "title": "Sam Rivera", "subtitle": "Product lead, TaskFlow" } }
+  ]
+}

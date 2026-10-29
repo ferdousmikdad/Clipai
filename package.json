@@ -1,0 +1,35 @@
+{
+  "name": "clipai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local, open-source video editor for animated / SaaS-style videos, controlled by AI over MCP.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r typecheck",
+    "start": "node scripts/start.mjs",
+    "dev": "pnpm --filter @clipai/editor dev",
+    "licenses:check": "node scripts/licenses.mjs --check",
+    "licenses:notice": "node scripts/licenses.mjs --notice"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^22.15.0",
+    "eslint": "^9.30.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "prettier": "^3.6.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.35.0",
+    "vitest": "^3.2.4"
+  }
+}
